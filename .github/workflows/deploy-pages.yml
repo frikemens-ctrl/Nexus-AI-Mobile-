@@ -1,0 +1,62 @@
+name: Deploy Nexus AI to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Export Expo web bundle
+        env:
+          EXPO_BASE_URL: Nexus-AI-Mobile-
+        run: npx expo export --platform web
+      - name: Prepare GitHub Pages routes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path('dist')
+          for source in list(root.rglob('*.html')):
+              if source.name in {'index.html', '404.html'}:
+                  continue
+              target = source.with_suffix('') / 'index.html'
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_bytes(source.read_bytes())
+          not_found = root / '+not-found.html'
+          if not_found.exists():
+              (root / '404.html').write_bytes(not_found.read_bytes())
+          PY
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
