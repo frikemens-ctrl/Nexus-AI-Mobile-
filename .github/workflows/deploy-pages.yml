@@ -38,6 +38,18 @@ jobs:
         env:
           EXPO_BASE_URL: Nexus-AI-Mobile-
         run: npx expo export --platform web
+      - name: Prefix static asset URLs for repository Pages
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          base = "/Nexus-AI-Mobile-"
+          root = Path("dist")
+          for page in root.rglob("*.html"):
+              text = page.read_text()
+              text = text.replace('href="/', f'href="{base}/')
+              text = text.replace('src="/', f'src="{base}/')
+              page.write_text(text)
+          PY
       - name: Prepare GitHub Pages routes
         run: |
           python3 - <<'PY'
