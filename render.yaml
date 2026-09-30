@@ -9,5 +9,7 @@ services:
         value: production
       - key: OPENAI_BASE_URL
         value: https://api.openai.com/v1
+      - key: OPENAI_MODEL
+        value: gpt-5-nano
       - key: OPENAI_API_KEY
         sync: false

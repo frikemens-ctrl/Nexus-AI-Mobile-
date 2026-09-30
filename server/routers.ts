@@ -70,6 +70,7 @@ export const appRouter = router({
           ...input.history,
           { role: "user", content: content.length === 1 && content[0].type === "text" ? content[0].text : content },
         ],
+        model: process.env.OPENAI_MODEL ?? "gpt-5-nano",
         maxTokens: 1200,
       });
       const answer = response.choices[0]?.message?.content;
